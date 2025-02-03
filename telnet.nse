@@ -1,11 +1,10 @@
--- Title: Telnet Backdoor Detection Script
--- Description: This script checks if a Telnet service is running on a target and attempts to detect signs of a backdoor.
+-- Title: Telnet Version Detection Script
+-- Description: This script connects to a Telnet service and attempts to retrieve the version information from the banner.
 -- Author: Your Name
 -- Date: 2025
 
-local shortport = require "shortport"
-local stdnse = require "stdnse"
 local nmap = require "nmap"
+local stdnse = require "stdnse"
 local string = require "string"
 
 -- Define the rule function to trigger the script for port 23 (Telnet)
@@ -13,29 +12,30 @@ rule = function(host, port)
     return port.number == 23 and port.protocol == "tcp"  -- Trigger on TCP port 23 (Telnet)
 end
 
--- Probe function
-function probe_telnet_backdoor(host, port)
-    local socket_obj = nmap.new_socket()  -- Use Nmap's socket function
+-- Probe function to retrieve Telnet banner and version
+function get_telnet_version(host, port)
+    local socket_obj = nmap.new_socket()  -- Create a new socket using Nmap's method
     socket_obj:set_timeout(5000)  -- Timeout set to 5 seconds (5000 ms)
 
-    -- Try connecting to the target via Telnet port (usually 23)
+    -- Try connecting to the target via Telnet port (usually port 23)
     local success, err = socket_obj:connect(host.ip, port)
     if success then
-        -- Send a basic Telnet command (e.g., "help" to check for a response)
-        socket_obj:send("help\r\n")
-
-        -- Attempt to receive the response from the target
+        -- Try receiving the initial banner message from the Telnet server
         local response, err = socket_obj:receive(1024)  -- Receive up to 1024 bytes
+
         if response then
-            -- Basic check for backdoor-like responses (this could be adjusted for your case)
-            if string.match(response, "backdoor") or string.match(response, "special_prompt") then
-                return true  -- Indicates a backdoor may be present
+            -- Check for version information in the banner
+            local version = string.match(response, ".*Telnet (.+)\r\n")  -- Match the Telnet version (common format)
+            if version then
+                return version  -- Return the version string if found
             else
-                return false  -- No indication of a backdoor
+                return "No version info found"  -- Return if no version info is detected
             end
+        else
+            return "No response from Telnet service"  -- No banner received
         end
     else
-        return false  -- Failed to connect to Telnet port
+        return "Failed to connect"  -- Connection failed
     end
 end
 
@@ -43,11 +43,11 @@ end
 action = function(host, port)
     -- Check if the port is 23 (Telnet)
     if port.protocol == "tcp" and port.number == 23 then
-        local result = probe_telnet_backdoor(host, port.number)
-        if result then
-            return "Telnet Backdoor detected!"
+        local version = get_telnet_version(host, port.number)
+        if version then
+            return "Telnet version: " .. version
         else
-            return "No Telnet backdoor found."
+            return "Could not retrieve Telnet version."
         end
     else
         return nil  -- Skip if not Telnet port
