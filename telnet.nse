@@ -5,37 +5,38 @@
 
 local shortport = require "shortport"
 local stdnse = require "stdnse"
-local socket = require "socket"
 local nmap = require "nmap"
 local string = require "string"
 
 -- Probe function
 function probe_telnet_backdoor(host, port)
-    local socket_obj = socket.tcp()
-    socket_obj:settimeout(5)  -- 5 seconds timeout for connection
+    local socket_obj = nmap.new_socket()  -- Use Nmap's socket function
+    socket_obj:set_timeout(5000)  -- Timeout set to 5 seconds (5000 ms)
 
-    local success, error = socket_obj:connect(host.ip, port)
+    -- Try connecting to the target via Telnet port (usually 23)
+    local success, err = socket_obj:connect(host.ip, port)
     if success then
-        -- Try sending a basic Telnet command to identify if there's a response
-        socket_obj:send("help\r\n")  -- Send a simple Telnet command, like "help"
+        -- Send a basic Telnet command (e.g., "help" to check for a response)
+        socket_obj:send("help\r\n")
 
-        local response, err = socket_obj:receive(1024)  -- Try to read up to 1024 bytes
+        -- Attempt to receive the response from the target
+        local response, err = socket_obj:receive(1024)  -- Receive up to 1024 bytes
         if response then
-            -- Basic check for signs of a backdoor (this can be customized)
+            -- Basic check for backdoor-like responses (this could be adjusted for your case)
             if string.match(response, "backdoor") or string.match(response, "special_prompt") then
-                return true  -- Likely a backdoor
+                return true  -- Indicates a backdoor may be present
             else
-                return false  -- No backdoor detected
+                return false  -- No indication of a backdoor
             end
         end
     else
-        return false  -- Connection failed
+        return false  -- Failed to connect to Telnet port
     end
 end
 
 -- Script entry point
 action = function(host, port)
-    -- Check if the port is 23 (Telnet port)
+    -- Check if the port is 23 (Telnet)
     if port.protocol == "tcp" and port.number == 23 then
         local result = probe_telnet_backdoor(host, port.number)
         if result then
