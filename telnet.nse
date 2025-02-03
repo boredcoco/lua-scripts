@@ -7,8 +7,8 @@ local nmap = require "nmap"
 local stdnse = require "stdnse"
 local string = require "string"
 
--- Define the rule function to trigger the script for port 23 (Telnet)
-rule = function(host, port)
+-- Define the portrule function to trigger the script for port 23 (Telnet)
+portrule = function(host, port)
     return port.number == 23 and port.protocol == "tcp"  -- Trigger on TCP port 23 (Telnet)
 end
 
