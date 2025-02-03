@@ -8,6 +8,11 @@ local stdnse = require "stdnse"
 local nmap = require "nmap"
 local string = require "string"
 
+-- Define the rule function to trigger the script for port 23 (Telnet)
+rule = function(host, port)
+    return port.number == 23 and port.protocol == "tcp"  -- Trigger on TCP port 23 (Telnet)
+end
+
 -- Probe function
 function probe_telnet_backdoor(host, port)
     local socket_obj = nmap.new_socket()  -- Use Nmap's socket function
