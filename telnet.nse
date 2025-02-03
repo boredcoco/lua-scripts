@@ -20,10 +20,13 @@ function get_telnet_version(host, port)
     -- Try connecting to the target via Telnet port (usually port 23)
     local success, err = socket_obj:connect(host.ip, port)
     if success then
+        stdnse.print_debug(1, "Connected to " .. host.ip .. " on port " .. port)  -- Debug: connection success
+
         -- Try receiving the initial banner message from the Telnet server
         local response, err = socket_obj:receive(1024)  -- Receive up to 1024 bytes
-
         if response then
+            stdnse.print_debug(1, "Received banner: " .. response)  -- Debug: banner received
+
             -- Check for version information in the banner
             local version = string.match(response, ".*Telnet (.+)\r\n")  -- Match the Telnet version (common format)
             if version then
@@ -35,7 +38,7 @@ function get_telnet_version(host, port)
             return "No response from Telnet service"  -- No banner received
         end
     else
-        return "Failed to connect"  -- Connection failed
+        return "Failed to connect: " .. (err or "Unknown error")  -- Connection failed, print error message
     end
 end
 
