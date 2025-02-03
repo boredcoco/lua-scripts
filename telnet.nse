@@ -46,6 +46,7 @@ local function get_telnet_version(host, port)
             return "No response from Telnet service"  -- No banner received
         end
     else
+        -- Handle the error properly: concatenate the error message
         return "Failed to connect: " .. (err or "Unknown error")  -- Connection failed, print error message
     end
 end
