@@ -12,15 +12,15 @@ portrule = function(host, port)
     return port.number == 23 and port.protocol == "tcp"  -- Trigger on TCP port 23 (Telnet)
 end
 
--- Probe function to retrieve Telnet banner and version
-function get_telnet_version(host, port)
+-- Function to retrieve Telnet banner and version
+local function get_telnet_version(host, port)
     local socket_obj = nmap.new_socket()  -- Create a new socket using Nmap's method
     socket_obj:set_timeout(5000)  -- Timeout set to 5 seconds (5000 ms)
 
     -- Try connecting to the target via Telnet port (usually port 23)
     local success, err = socket_obj:connect(host.ip, port)
     if success then
-        stdnse.print_debug(1, "Connected to " .. host.ip .. " on port " .. port)  -- Debug: connection success
+        stdnse.print_debug(1, "Connected to " .. host.ip .. " on port " .. port.number)  -- Debug: connection success
 
         -- Try receiving the initial banner message from the Telnet server
         local response, err = socket_obj:receive(1024)  -- Receive up to 1024 bytes
